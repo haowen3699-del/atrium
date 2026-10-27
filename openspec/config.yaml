@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  atrium · AI 机队看板（aipanel）— 一个包 = 完整服务的 agent 机队监控与操控台。
+
+  仓库：https://github.com/haowen3699-del/atrium
+  内网 PyPI：https://pypi.org/simple/
+  包名：opencode-fleet-atrium（pip，平台 wheel 内含 Node 运行时）
+  命令：atrium（含 atrium info / autostart / --print-key）
+  端口：默认 6080（被占用自动顺延）；数据目录 ~/.atrium（Windows %APPDATA%\atrium）
+
+  形态：每台机器装同一个包、跑同一个服务；同网段 UDP 自动互相发现，靠"团队密钥"互信，
+  不再需要单独安装 sidecar，也不再手写 peers。hub 自己扫本机 opencode server 与运行进程
+  （cc-connect worker / openclaw / hermes / OpenCode 桌面版），并把结果共享给同网段实例。
+
+  能力域：节点监控（opencode server 轮询 + SSE 快照）、本机 agent 扫描、局域网自动发现与组网、
+  看板 UI（泳道/螺旋/轨道/磁贴、会话对话、权限批准、值班提醒、事件流、使用帮助）、
+  pip 发行与开机自启。
+
+  约束：凭据只在本机内存/用户目录使用，禁止提交任何真实口令（fleet.config.json、*.pypirc 已 gitignore）；
+  团队密钥不参与 UDP 广播，只在 HTTP 请求头传递；本机 loopback 免密钥、局域网必须带密钥。
+
+rules:
+  proposal:
+    - 必须声明变更分级（Trivial / Standard / Critical）
+    - 涉及团队密钥/鉴权模型、自动发现协议、pip 包结构、开机自启方式的变更为 Critical
+    - 改变看板可见状态定义或 run agent 识别规则的为 Standard
+  specs:
+    - 每个能力一个 spec.md，用 Purpose + Requirement(SHALL) + Scenario(WHEN/THEN/AND) 结构
+    - 描述"应该怎样"而不是"当前实现"，实现细节放 design.md

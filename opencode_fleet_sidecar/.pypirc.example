@@ -1,0 +1,8 @@
+[distutils]
+index-servers =
+    nexus
+
+[nexus]
+repository = https://YOUR-NEXUS-HOST/repository/pypi/
+username = pypi-deployer
+password = YOUR-PYPI-PASSWORD

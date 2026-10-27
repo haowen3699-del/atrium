@@ -1,0 +1,94 @@
+@layer theme, base, legacy, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tw-animate-css";
+@import "./styles/legacy.css" layer(legacy);
+@import "./styles/cult.css" layer(components);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--panel);
+  --popover-foreground: var(--text);
+  --primary: var(--writing);
+  --primary-foreground: #0b1220;
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text-2);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-3);
+  --accent: rgba(var(--acc-rgb), 0.14);
+  --accent-foreground: var(--text);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --ring: var(--writing);
+  --radius: 0.875rem;
+  --chart-1: var(--writing);
+  --chart-2: var(--ready);
+  --chart-3: var(--awaiting);
+  --chart-4: var(--done);
+  --chart-5: var(--danger);
+}
+
+[data-sonner-toaster].polished-sonner [data-sonner-toast] {
+  transition: transform 400ms, height 400ms, box-shadow 200ms;
+}
+[data-sonner-toaster].polished-sonner [data-sonner-toast][data-mounted="true"]:not([data-removed="true"]) {
+  opacity: 1 !important;
+}
+[data-sonner-toaster].polished-sonner [data-sonner-toast][data-removed="true"][data-front="true"] {
+  transition: transform 400ms, opacity 200ms;
+}
+[data-sonner-toaster].polished-sonner [data-sonner-toast] > * {
+  transition: none !important;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--border-2);
+  --color-ring: var(--ring);
+
+  --color-writing: var(--writing);
+  --color-awaiting: var(--awaiting);
+  --color-ready: var(--ready);
+  --color-asleep: var(--asleep);
+  --color-done: var(--done);
+  --color-danger: var(--danger);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-panel: var(--panel);
+  --color-deep: var(--deep);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+  --font-mono: var(--mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}

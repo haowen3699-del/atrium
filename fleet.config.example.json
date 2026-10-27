@@ -1,0 +1,31 @@
+{
+  "port": 6080,
+  "pollIntervalMs": 5000,
+  "discoverLocal": true,
+  "nodes": [
+    {
+      "id": "win-ebao",
+      "label": "Win · ebao_jk_kb_v1 :4096",
+      "url": "http://10.253.109.134:4096",
+      "username": "opencode",
+      "password": "${NODE_PASSWORD}",
+      "runAgentsUrl": "http://10.253.109.134:9099/runagents"
+    },
+    {
+      "id": "mac-jk",
+      "label": "Mac · jk :4096",
+      "url": "http://10.253.100.82:4096",
+      "username": "opencode",
+      "password": "${NODE_PASSWORD}",
+      "runAgentsUrl": "http://10.253.100.82:9099/runagents"
+    }
+  ],
+  "peers": [
+    {
+      "id": "winpro",
+      "label": "Win-Probe",
+      "url": "http://10.253.109.134:6080",
+      "token": "${FLEET_PEER_TOKEN}"
+    }
+  ]
+}

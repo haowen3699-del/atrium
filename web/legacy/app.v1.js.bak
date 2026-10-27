@@ -1,0 +1,199 @@
+const $ = (s) => document.querySelector(s);
+const nodesEl = $("#nodes");
+const feedEl = $("#feed");
+const pendEl = $("#pending");
+let onlyActive = true;
+let expanded = new Set();
+let lastSnap = { nodes: [] };
+const seenEventKeys = new Set();
+
+function ago(ts) {
+  if (!ts) return "—";
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + "s";
+  if (s < 3600) return Math.floor(s / 60) + "m";
+  return Math.floor(s / 3600) + "h";
+}
+function esc(x) {
+  return String(x ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+function shortDir(d) {
+  if (!d) return "";
+  const p = d.split("/").filter(Boolean);
+  return p.length <= 2 ? d : "…/" + p.slice(-2).join("/");
+}
+
+function renderSummary(snap) {
+  const nodes = snap.nodes ?? [];
+  $("#s-nodes").textContent = nodes.length;
+  $("#s-online").textContent = nodes.filter((n) => n.status === "online").length;
+  $("#s-busy").textContent = nodes.reduce((a, n) => a + (n.busyCount ?? 0), 0);
+  $("#s-offline").textContent = nodes.filter((n) => n.status === "offline").length;
+}
+
+function renderPending(snap) {
+  const items = [];
+  for (const n of snap.nodes ?? []) {
+    for (const p of n.pendingPermissions ?? []) {
+      items.push(
+        `<div class="pend perm">
+          <div class="pend-h">⚠ 待审批 <span class="pend-n">${esc(n.label)}</span></div>
+          <div class="pend-b"><b>${esc(p.permission)}</b> <code>${esc((p.patterns || []).join(", "))}</code></div>
+          <div class="pend-act">
+            <button data-act="perm" data-node="${esc(n.id)}" data-id="${esc(p.id)}" data-r="once">允许一次</button>
+            <button data-act="perm" data-node="${esc(n.id)}" data-id="${esc(p.id)}" data-r="always">始终允许</button>
+            <button class="rej" data-act="perm" data-node="${esc(n.id)}" data-id="${esc(p.id)}" data-r="reject">拒绝</button>
+          </div>
+        </div>`,
+      );
+    }
+    for (const q of n.pendingQuestions ?? []) {
+      for (const qq of q.questions ?? []) {
+        const opts = (qq.options ?? [])
+          .map(
+            (o) =>
+              `<label class="qopt"><input type="${qq.multiple ? "checkbox" : "radio"}" name="${esc(q.id)}" value="${esc(o.label)}" /> ${esc(o.label)}${o.description ? ` <span class="qdesc">${esc(o.description)}</span>` : ""}</label>`,
+          )
+          .join("");
+        items.push(
+          `<div class="pend ques">
+            <div class="pend-h">❓ Agent 提问 <span class="pend-n">${esc(n.label)}</span></div>
+            <div class="pend-b">${esc(qq.question)}<div class="qopts">${opts}</div></div>
+            <div class="pend-act"><button data-act="ques" data-node="${esc(n.id)}" data-id="${esc(q.id)}" data-qid="${esc(q.id)}">回复</button></div>
+          </div>`,
+        );
+      }
+    }
+  }
+  pendEl.innerHTML = items.join("");
+  pendEl.style.display = items.length ? "flex" : "none";
+  document.body.classList.toggle("has-pending", items.length > 0);
+}
+
+function renderNodes(snap) {
+  const nodes = snap.nodes ?? [];
+  nodesEl.innerHTML = nodes
+    .map((n) => {
+      const busy = n.sessions.filter((s) => s.busy);
+      const active = busy[0];
+      const shown = onlyActive ? n.sessions.filter((s) => s.busy || Date.now() - s.updatedAt < 300000) : n.sessions;
+      const hiddenCount = n.sessions.length - shown.length;
+      const isOpen = expanded.has(n.id);
+      const np = (n.pendingPermissions ?? []).length + (n.pendingQuestions ?? []).length;
+      return `<div class="node ${n.status} ${np ? "needs" : ""}" data-id="${esc(n.id)}">
+        <div class="node-head">
+          <span class="dot ${n.status}"></span>
+          <span class="node-label">${esc(n.label)}</span>
+          ${np ? `<span class="pend-badge">${np} 待办</span>` : ""}
+          <span class="node-right">${n.latencyMs != null ? n.latencyMs + "ms" : "…"} · sse:${n.sseConnected ? "✓" : "✗"}</span>
+        </div>
+        <div class="node-sub">${n.sessions.length} 会话 · 心跳 ${ago(n.lastOkAt)}前${n.error ? ` · <span class="node-err">${esc(n.error)}</span>` : ""}</div>
+        ${
+          active
+            ? `<div class="node-active"><span class="pulse"></span><span class="oa-t">${esc(active.title || active.id)}</span><code>${esc(shortDir(active.directory))}</code></div>`
+            : `<div class="node-idle">空闲</div>`
+        }
+        <div class="sess-wrap ${isOpen ? "open" : ""}">
+          ${shown
+            .map(
+              (s) => `<div class="sess ${s.busy ? "busy" : ""}">
+                <span class="sdot ${s.busy ? "b" : "i"}"></span>
+                <span class="stitle">${esc(s.title || s.id)}</span>
+                <span class="stag">${s.model ? esc(s.model) : ""}${s.model && s.busy ? " · " : ""}${s.busy ? "运行中" : ago(s.updatedAt) + "前"}</span>
+                <div class="sact">
+                  ${s.busy ? `<button class="mini abort" data-act="abort" data-node="${esc(n.id)}" data-sid="${esc(s.id)}">中止</button>` : ""}
+                  <button class="mini steer" data-act="steer" data-node="${esc(n.id)}" data-sid="${esc(s.id)}" data-title="${esc(s.title || s.id)}">追问</button>
+                </div>
+              </div>`,
+            )
+            .join("") || `<div class="sess-empty">无活跃会话</div>`}
+          ${hiddenCount > 0 ? `<div class="sess-more">另有 ${hiddenCount} 个历史空闲会话已隐藏</div>` : ""}
+        </div>
+        <div class="node-foot">
+          <button class="mini expand" data-act="expand" data-node="${esc(n.id)}">${isOpen ? "收起" : "展开会话"}</button>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+function renderFeed(snap) {
+  const all = [];
+  for (const n of snap.nodes ?? []) for (const e of n.recentEvents) all.push({ ...e, node: n.label });
+  all.sort((a, b) => b.ts - a.ts);
+  for (const e of all.slice(0, 80)) {
+    const key = e.node + "|" + e.ts + "|" + e.type + "|" + e.summary;
+    if (seenEventKeys.has(key)) continue;
+    seenEventKeys.add(key);
+    const row = document.createElement("div");
+    row.className = "ev ev-" + e.type.split(".")[0];
+    const t = new Date(e.ts).toLocaleTimeString("zh", { hour12: false });
+    row.innerHTML = `<span class="ev-t">${t}</span><span class="ev-n">${esc(e.node)}</span><span class="ev-type">${esc(e.type)}</span><span class="ev-s">${esc(e.summary)}</span>`;
+    feedEl.prepend(row);
+  }
+  while (feedEl.childElementCount > 300) feedEl.lastChild.remove();
+}
+
+function render(snap) {
+  lastSnap = snap;
+  renderSummary(snap);
+  renderPending(snap);
+  renderNodes(snap);
+  renderFeed(snap);
+  $("#clock").textContent = new Date(snap.generatedAt).toLocaleTimeString("zh", { hour12: false });
+}
+
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  return r.json();
+}
+
+function steerDialog(nodeId, sid, title) {
+  const text = prompt(`向「${title}」注入一条指令（会立即发给正在运行的 agent）：`);
+  if (!text || !text.trim()) return;
+  post(`/api/nodes/${nodeId}/sessions/${sid}/prompt`, { text }).then((j) => {
+    if (!j.ok) alert("注入失败");
+  });
+}
+
+document.body.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button[data-act]");
+  if (!b) return;
+  const { act, node, sid, id, r } = b.dataset;
+  if (act === "expand") {
+    expanded.has(node) ? expanded.delete(node) : expanded.add(node);
+    renderNodes(lastSnap);
+  } else if (act === "abort") {
+    b.disabled = true;
+    if (!(await post(`/api/nodes/${node}/sessions/${sid}/abort`)).ok) alert("中止失败");
+  } else if (act === "steer") {
+    steerDialog(node, sid, b.dataset.title);
+  } else if (act === "perm") {
+    b.disabled = true;
+    if (!(await post(`/api/nodes/${node}/permissions/${id}/reply`, { response: r })).ok) alert("回复失败");
+  } else if (act === "ques") {
+    const card = b.closest(".pend");
+    const chosen = [...card.querySelectorAll("input:checked")].map((i) => i.value);
+    if (!chosen.length) return alert("请选择一个选项");
+    if (!(await post(`/api/nodes/${node}/questions/${id}/reply`, { answers: [chosen] })).ok) alert("回复失败");
+  }
+});
+
+$("#toggle-active")?.addEventListener("change", (e) => {
+  onlyActive = e.target.checked;
+  renderNodes(lastSnap);
+});
+
+function connect() {
+  const es = new EventSource("/api/stream");
+  es.addEventListener("snapshot", (m) => {
+    $("#conn").textContent = "实时连接";
+    $("#conn").className = "conn on";
+    render(JSON.parse(m.data));
+  });
+  es.onerror = () => {
+    $("#conn").textContent = "重连中…";
+    $("#conn").className = "conn off";
+  };
+}
+connect();

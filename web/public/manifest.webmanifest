@@ -1,0 +1,17 @@
+{
+  "name": "太和 · AI 机队看板",
+  "short_name": "太和",
+  "description": "AI 机队看板：本机进程扫描 + 局域网自动发现 + 团队密钥互信",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#151a24",
+  "theme_color": "#151a24",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

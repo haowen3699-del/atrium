@@ -1,0 +1,29 @@
+[project]
+name = "opencode-fleet-sidecar"
+version = "0.2.6"
+description = "Remote cc-connect / opencode run-agent sidecar for OpenCode Fleet Monitor"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Fleet Team" }
+]
+keywords = ["opencode", "cc-connect", "fleet", "sidecar"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[project.scripts]
+oc-sidecar = "opencode_fleet_sidecar.server:main"
+opencode-fleet-sidecar = "opencode_fleet_sidecar.server:main"
+
+[project.urls]
+Homepage = "https://github.com/builderz-labs/mission-control"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
