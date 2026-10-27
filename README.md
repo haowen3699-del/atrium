@@ -16,6 +16,20 @@ Atrium 是一个面向 **opencode / cc-connect** 多机多会话场景的实时�
 - **组网零配置**：UDP 广播自动发现同网段实例，团队密钥互信
 - **一个包装完**：包内自带 Node 运行时，目标机无需预装 Node
 
+## 界面预览
+
+![看板 · 分组视图](docs/screenshots/board.png)
+<p align="center"><i>看板：搜索 + 状态筛选 + 按机器/项目聚合的会话卡片，运行中带跑马灯与流动光晕</i></p>
+
+![轨道视图](docs/screenshots/orbit.png)
+<p align="center"><i>轨道：每个会话一颗球，一眼看清谁在跑</i></p>
+
+![会话面板](docs/screenshots/board-chat.png)
+<p align="center"><i>右侧会话面板：完整对话、卡死检测、异常结束提示与一键重发</i></p>
+
+![低语输入](docs/screenshots/whisper.png)
+<p align="center"><i>低语：随时对任意会话发指令，回车即寄出</i></p>
+
 ## 安装
 
 macOS / Windows / Linux 用同一个包，pip 会按平台自动选择 wheel：
